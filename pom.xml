@@ -11,8 +11,8 @@
     <groupId>com.example</groupId>
     <artifactId>GATM</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>GATM</name>
-    <description>GATM</description>
+    <name>TaskManagement</name>
+    <description>TaskManagement</description>
     <properties>
         <java.version>17</java.version>
     </properties>
