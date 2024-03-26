@@ -1,6 +1,7 @@
 package com.example.gatm.service;
 
 import com.example.gatm.Repository.TaskRepository;
+import com.example.gatm.dto.CountType;
 import com.example.gatm.model.Task;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,5 +37,9 @@ public class TaskService {
 
     public void delete(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    public List<CountType> getPercentageGroupedByType() {
+        return taskRepository.getPercentageGroupByType();
     }
 }
