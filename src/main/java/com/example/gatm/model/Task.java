@@ -1,6 +1,5 @@
 package com.example.gatm.model;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +7,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
@@ -19,7 +19,7 @@ import java.util.Date;
 @Data
 public class Task {
 
-    @jakarta.persistence.Id
+    @Id
     @GeneratedValue (strategy = GenerationType.AUTO)
     @Column (name = "Id")
     private Long Id;
