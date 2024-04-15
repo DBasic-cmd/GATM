@@ -1,5 +1,6 @@
 package com.example.gatm.serviceImpl;
 
+import com.example.gatm.dto.EmailDto;
 import com.example.gatm.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,24 +22,26 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender javaMailSender;
     @Override
-    public String sendMail(MultipartFile[] file, String to, String[] cc, String subject, String body) {
+    public String sendMail(EmailDto emailDto) {
         try {
 
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
             mimeMessageHelper.setFrom(fromEmail);
-            mimeMessageHelper.setTo(to);
-            mimeMessageHelper.setCc(cc);
-            mimeMessageHelper.setSubject(subject);
-            mimeMessageHelper.setText(body);
+            mimeMessageHelper.setTo(emailDto.getTo());
+            if (!Objects.isNull(emailDto.getCc()))
+                mimeMessageHelper.setCc(emailDto.getCc());
+            mimeMessageHelper.setSubject(emailDto.getSubject());
+            mimeMessageHelper.setText(emailDto.getBody());
+            if (Objects.nonNull(emailDto.getFile())) {
 
-            for (MultipartFile multipartFile : file) {
-                mimeMessageHelper.addAttachment(
-                        Objects.requireNonNull(multipartFile.getOriginalFilename()),
-                        new ByteArrayResource(multipartFile.getBytes())
-                );
+                for (MultipartFile multipartFile : emailDto.getFile()) {
+                    mimeMessageHelper.addAttachment(
+                            Objects.requireNonNull(multipartFile.getOriginalFilename()),
+                            new ByteArrayResource(multipartFile.getBytes())
+                    );
+                }
             }
-
             javaMailSender.send(mimeMessage);
 
             return "mail send";

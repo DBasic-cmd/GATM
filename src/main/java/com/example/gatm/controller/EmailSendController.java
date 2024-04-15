@@ -1,10 +1,8 @@
 package com.example.gatm.controller;
 
+import com.example.gatm.dto.EmailDto;
 import com.example.gatm.service.EmailService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -17,8 +15,8 @@ public class EmailSendController {
     }
 
     @PostMapping("/send")
-    public String sendMail(@RequestParam(value = "file", required = false)MultipartFile[] file, String to, String[] cc, String subject, String body){
-        return emailService.sendMail(file, to, cc, subject, body);
+    public String sendMail(@ModelAttribute EmailDto emailDto){
+        return emailService.sendMail(emailDto);
     }
 }
 
