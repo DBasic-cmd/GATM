@@ -1,5 +1,6 @@
 package com.example.gatm.controller;
 
+import com.example.gatm.dto.CountType;
 import com.example.gatm.model.Task;
 import com.example.gatm.service.TaskService;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,12 @@ import java.util.List;
 @AllArgsConstructor
 public class TaskController {
     private TaskService taskService;
+
+    @GetMapping("/task/vData/percentCountType")
+    public List<CountType> getPercentageGroupedByType(){
+
+        return taskService.getPercentageGroupedByType();
+    }
 
     //Get tasks
     @GetMapping("/task")
