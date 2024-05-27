@@ -3,6 +3,7 @@ package com.example.gatm.serviceImpl;
 import com.example.gatm.dto.EmailDto;
 import com.example.gatm.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,6 +16,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailServiceImpl implements EmailService {
 
     @Value("{spring.mail.username}")
@@ -22,32 +24,22 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender javaMailSender;
     @Override
-    public String sendMail(EmailDto emailDto) {
+    public void sendEmail(String email, String subject, String body) {
         try {
-
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false);
             mimeMessageHelper.setFrom(fromEmail);
-            mimeMessageHelper.setTo(emailDto.getTo());
-            if (!Objects.isNull(emailDto.getCc()))
-                mimeMessageHelper.setCc(emailDto.getCc());
-            mimeMessageHelper.setSubject(emailDto.getSubject());
-            mimeMessageHelper.setText(emailDto.getBody());
-            if (Objects.nonNull(emailDto.getFile())) {
+            mimeMessageHelper.setTo(email);
+            mimeMessageHelper.setSubject(subject);
+            mimeMessageHelper.setText(body);
 
-                for (MultipartFile multipartFile : emailDto.getFile()) {
-                    mimeMessageHelper.addAttachment(
-                            Objects.requireNonNull(multipartFile.getOriginalFilename()),
-                            new ByteArrayResource(multipartFile.getBytes())
-                    );
-                }
-            }
             javaMailSender.send(mimeMessage);
 
-            return "mail send";
-
-        }catch (Exception e){
-            throw new RuntimeException(e);
+            log.info("Simple email sent to {}", email);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("Error while sending simple email to {}", email);
         }
+
     }
 }

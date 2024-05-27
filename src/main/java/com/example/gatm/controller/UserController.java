@@ -1,9 +1,6 @@
 package com.example.gatm.controller;
 
-import com.example.gatm.dto.PrincipalDTO;
-import com.example.gatm.dto.UserDto;
-import com.example.gatm.dto.UserLoginDto;
-import com.example.gatm.dto.UserSignUpDto;
+import com.example.gatm.dto.*;
 import com.example.gatm.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +33,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/")
     public ResponseEntity<UserDto> signUpUser(@RequestBody UserSignUpDto signUpDto) {
         UserDto createdUser = userService.signUpUser(signUpDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
@@ -73,4 +70,11 @@ public class UserController {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/activate")
+    public ResponseEntity<String> activateAccount(@RequestBody ActivationDto activationDto, @RequestParam String email) {
+        String response = userService.activateAccount(activationDto, email);
+        return ResponseEntity.ok(response);
+    }
+
 }

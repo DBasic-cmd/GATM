@@ -1,12 +1,9 @@
 package com.example.gatm.service;
 
-import com.example.gatm.dto.PrincipalDTO;
-import com.example.gatm.dto.UserDto;
-import com.example.gatm.dto.UserLoginDto;
-import com.example.gatm.dto.UserSignUpDto;
+import com.example.gatm.dto.*;
+import com.example.gatm.model.auth.User;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface UserService {
     List<UserDto> getAllUsers();
@@ -21,4 +18,8 @@ public interface UserService {
     UserDto updateUser(Long userId, UserDto userDto);
 
     void deleteUser(Long userId);
+
+    User createStaff(StaffDto staffCreationDto);
+
+    String activateAccount(ActivationDto activationDto, String email);
 }

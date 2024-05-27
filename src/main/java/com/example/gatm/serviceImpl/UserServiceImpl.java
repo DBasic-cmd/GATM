@@ -2,22 +2,16 @@ package com.example.gatm.serviceImpl;
 
 import com.example.gatm.Repository.auth.UserRepository;
 import com.example.gatm.Repository.auth.UserRoleRepository;
-import com.example.gatm.dto.PrincipalDTO;
-import com.example.gatm.dto.UserDto;
-import com.example.gatm.dto.UserLoginDto;
-import com.example.gatm.dto.UserSignUpDto;
+import com.example.gatm.dto.*;
 import com.example.gatm.exception.UserNotFoundException;
 import com.example.gatm.model.auth.User;
 import com.example.gatm.model.auth.UserRole;
 import com.example.gatm.security.JWTUtil;
+import com.example.gatm.service.EmailService;
 import com.example.gatm.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +27,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
+    private final EmailService emailService;
+
     @Override
     public List<UserDto> getAllUsers() {
         log.info("Fetching all users...");
@@ -69,7 +65,6 @@ public class UserServiceImpl implements UserService {
     }
 
 
-
     @Override
     public UserDto signUpUser(UserSignUpDto signUpDto) {
         User newUser = new User();
@@ -90,7 +85,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto adminSignUp(UserDto dto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(dto.getEmail());
-        if (optionalUser.isEmpty()){
+        if (optionalUser.isEmpty()) {
             User user = new User();
             user.setEmail(dto.getEmail());
             user.setFirstName(dto.getFirstName());
@@ -98,11 +93,11 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
             user.setDisabled(true);
             Optional<UserRole> role = userRoleRepository.findById(dto.getRoleId());
-            if (dto.getRoleId() != null && role.isPresent()){
+            if (dto.getRoleId() != null && role.isPresent()) {
                 user.setRole(role.get());
             }
             userRepository.save(user);
-        }else {
+        } else {
             throw new RuntimeException("Email already exist");
         }
         return null;
@@ -110,31 +105,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PrincipalDTO loginUser(UserLoginDto dto) {
-//        Authentication authentication;
-//        PrincipalDTO principalDTO = new PrincipalDTO();
-//        try{
-//            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword()));
-//        }catch (AuthenticationException ex){
-//            log.info(ex.getMessage());
-//            System.out.println("Exceppppppppppppppppp " + dto.getEmail());
-//            principalDTO.setMessage("Not Successful");
-//            principalDTO.setSuccessful(false);
-//            return principalDTO;
-//        }
-//
-//        principalDTO.setMessage("Successful");
-//        principalDTO.setSuccessful(true);
-//        principalDTO.setToken(jwtUtil.generateToken(dto.getEmail()));
         PrincipalDTO principalDTO = new PrincipalDTO();
         Optional<User> optionalUser = userRepository.findByEmail(dto.getEmail());
-        if (optionalUser.isPresent()){
+        if (optionalUser.isPresent()) {
 
-            if (passwordEncoder.matches(dto.getPassword(), optionalUser.get().getPassword())){
+            if (passwordEncoder.matches(dto.getPassword(), optionalUser.get().getPassword())) {
                 principalDTO.setMessage("Successful");
                 principalDTO.setSuccessful(true);
                 principalDTO.setToken(jwtUtil.generateToken(dto.getEmail()));
             }
-        }else {
+        } else {
             log.info("User not found");
             principalDTO.setMessage("Not Successful");
             principalDTO.setSuccessful(false);
@@ -186,7 +166,91 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public User createStaff(StaffDto staffDto) {
+        log.info("Creating new staff member with email: {}", staffDto.getEmail());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(staffDto.getEmail());
+        if (optionalUser.isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        User newUser = new User();
+        newUser.setFirstName(staffDto.getFirstName());
+        newUser.setLastName(staffDto.getLastName());
+        newUser.setEmail(staffDto.getEmail());
+        Optional<UserRole> userRole = userRoleRepository.findById(2L);
+        if (userRole.isEmpty()) {
+            throw new RuntimeException("User role does not exist");
+        }
+        newUser.setRole(userRole.get());
+        String otp = generateOTP();
+
+        newUser.setOtp(otp);
+        User savedUser = userRepository.save(newUser);
+
+
+        // Generate activation link
+        String activationLink = "http://localhost:8082/api/v1/users/activate?email=" + staffDto.getEmail();
+
+        // Prepare email details
+        String subject = "Welcome to Our Service!";
+        String body = String.format(
+                "Dear %s %s,\n\n" +
+                        "Welcome to our service! We are excited to have you on board. Please activate your account using the link below:\n\n" +
+                        "%s\n\n" +
+                        "OTP: %s\n\n" +
+                        "Best regards,\n" +
+                        "The Team",
+                newUser.getFirstName(),
+                newUser.getLastName(),
+                activationLink,
+                otp
+        );
+
+        // Send the welcome email with activation link
+        emailService.sendEmail(newUser.getEmail(), subject, body);
+
+        log.info("New staff member created with ID: {}", savedUser.getId());
+        return savedUser;
+    }
+
+    public String generateOTP() {
+        Random random = new Random();
+        // Generate a random number between 0 and 999999
+        int otp = random.nextInt(1000000);
+
+        // Convert the number to a string and pad with leading zeros if necessary
+        String otpString = String.format("%06d", otp);
+
+        return otpString;
+    }
+
+    @Override
+    public String activateAccount(ActivationDto activationDto, String email) {
+        if (!activationDto.getPassword().equals(activationDto.getConfirmPassword())) {
+            throw new RuntimeException("Passwords do not match");
+        }
+        log.info("EMAIL {}", email);
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (!user.getOtp().equals(activationDto.getOtp())) {
+                throw new RuntimeException("Invalid OTP");
+            }
+            user.setPassword(passwordEncoder.encode(activationDto.getPassword()));
+            user.setDisabled(false); // Enable the user account
+            user.setAccountVerified(true);
+            user.setOtp(null);
+            userRepository.save(user);
+
+            return "Account activated successfully!";
+        } else {
+            throw new RuntimeException("User not found");
+        }
+    }
 }
+
 
 
 

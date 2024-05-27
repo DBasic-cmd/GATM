@@ -30,6 +30,7 @@ public class User {
     @Column(name = "email", unique = true, nullable = false)
     private String email;
     private String password;
+    private String otp;
     private boolean isDisabled;
     private boolean isAccountVerified;
     @CreationTimestamp
@@ -39,7 +40,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private SecurityQuestion securityQuestion;
     private String securityAnswer;
-    @ManyToOne(targetEntity = UserRole.class, fetch = FetchType.LAZY)
+    @ManyToOne(targetEntity = UserRole.class, fetch = FetchType.EAGER)
     private UserRole role;
     @Transient
     private String fullName;

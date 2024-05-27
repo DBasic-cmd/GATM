@@ -14,9 +14,5 @@ public class EmailSendController {
         this.emailService = emailService;
     }
 
-    @PostMapping("/send")
-    public String sendMail(@ModelAttribute EmailDto emailDto){
-        return emailService.sendMail(emailDto);
-    }
 }
 
